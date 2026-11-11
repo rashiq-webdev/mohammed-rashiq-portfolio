@@ -24,9 +24,7 @@
 .bgaudio:hover { border-color: var(--ink-hot, #ff2a2b); }
 .bgaudio:focus-visible { outline: 2px solid var(--ink-hot, #ff2a2b); outline-offset: 3px; }
 .bgaudio[hidden] { display: none; }
-
-/* stays out of the way until the opening black has lifted */
-.is-booting .bgaudio { opacity: 0; pointer-events: none; }
+.bgaudio.is-blocked { border-color: rgba(237, 237, 237, .55); }
 
 .bgaudio__bars {
   display: inline-flex;

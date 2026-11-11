@@ -30,10 +30,11 @@ const txt = btn.querySelector('.bgaudio__txt');
 function paint() {
   const live = wanted && !audio.paused;
   btn.classList.toggle('is-on', live);
-  btn.setAttribute('aria-pressed', String(wanted));
+  btn.classList.toggle('is-blocked', wanted && audio.paused);
+  btn.setAttribute('aria-pressed', String(live));
   btn.setAttribute('aria-label',
-    wanted ? 'Turn background music off' : 'Turn background music on');
-  txt.textContent = wanted ? 'Sound on' : 'Sound off';
+    live ? 'Turn background music off' : 'Enable background music');
+  txt.textContent = live ? 'Sound on' : wanted ? 'Tap to enable sound' : 'Sound off';
 }
 
 function fadeTo(target, then) {
@@ -74,10 +75,8 @@ function start() {
 /**
  * Start the music and report whether it is actually sounding.
  *
- * The opening sequence calls this BEFORE it begins, so the track is already
- * playing when the first letter lands. Where the browser refuses audio until
- * the visitor interacts, this resolves false and the opening holds on its
- * Enter button instead; that click is the gesture that unlocks the sound.
+ * The opening attempts music before it begins. If autoplay is refused, the
+ * visual intro continues and the sound control invites a user gesture.
  */
 export function startSound() {
   if (!wanted) return Promise.resolve(true);
@@ -90,8 +89,16 @@ function stop() {
 
 btn.addEventListener('click', (e) => {
   e.stopPropagation();
-  wanted = !wanted;
-  if (wanted) start(); else stop();
+  if (!wanted) {
+    wanted = true;
+    start();
+  } else if (audio.paused) {
+    // Autoplay may have been blocked; the button click retries from a gesture.
+    start();
+  } else {
+    wanted = false;
+    stop();
+  }
   paint();
 });
 
@@ -105,6 +112,8 @@ document.addEventListener('visibilitychange', () => {
 });
 
 audio.addEventListener('error', () => { btn.hidden = true; }, { once: true });
+audio.addEventListener('playing', paint);
+audio.addEventListener('pause', paint);
 
 document.body.appendChild(btn);
 paint();

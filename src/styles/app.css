@@ -94,10 +94,11 @@ html.is-booting .hdr { opacity: 0; }
   z-index: 1;
 }
 
-/* The hero figure is a drawn character, painted by main.js onto two canvases:
-   one behind the WebGL canvas and one in front. The front one is cross-faded
-   in (--portrait-front) so he comes through the wordmark instead of jumping
-   over it. */
+/* The walk is painted by main.js onto two canvases: one behind the WebGL
+   canvas and one in front. The front one is cross-faded in (--portrait-front)
+   so he comes through the wordmark instead of jumping over it. The <video> is
+   only the source of the poses, and the still shown when there is no motion. */
+.hero-portrait,
 .hero-portrait-back,
 .hero-portrait-front {
   position: absolute;
@@ -107,28 +108,85 @@ html.is-booting .hdr { opacity: 0; }
   height: var(--portrait-height, 80vh);
   width: auto;
   max-width: min(94vw, 980px);
+  object-fit: contain;
+  object-position: center bottom;
+  -webkit-mask-image: url('../../public/images/mohammed-rashiq-walk-mask.png');
+  mask-image: url('../../public/images/mohammed-rashiq-walk-mask.png');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
   opacity: 0;
-  /* the scale is written every frame by main.js, so it must not be eased
-     again here. It grows from the feet so he stays on the ground. */
-  transform: translate3d(-50%, 0, 0) scale(var(--portrait-approach, .58));
+  /* written every frame by main.js, so none of it may be eased again here.
+     Everything pivots at the feet: the bob stretches him upward and the lean
+     tips him over the planted leg while the shoes stay on the ground. */
+  transform: translate3d(-50%, 0, 0) scale(var(--portrait-approach, .58))
+    rotate(var(--portrait-lean, 0deg)) scaleY(var(--portrait-bob, 1));
   transform-origin: 50% 100%;
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, .32))
-    drop-shadow(0 0 18px rgba(219, 64, 40, .16));
+  filter: contrast(1.06) brightness(.96)
+    drop-shadow(0 18px 24px rgba(0, 0, 0, .32))
+    drop-shadow(0 0 18px rgba(219, 64, 40, .14));
   pointer-events: none;
   user-select: none;
 }
 .hero-portrait-back { transition: opacity .7s ease; }
-.is-portrait-walking .hero-portrait-back { opacity: 1; }
+.is-portrait-walking .hero-portrait-back { opacity: .98; }
 .hero-portrait-front { z-index: 2; }
-.is-portrait-walking .hero-portrait-front { opacity: var(--portrait-front, 0); }
+.is-portrait-walking .hero-portrait-front {
+  opacity: calc(var(--portrait-front, 0) * .98);
+}
 /* once the front layer has fully taken over, the copy behind is redundant */
 .is-portrait-held .hero-portrait-back { opacity: 0; transition: none; }
 
-/* No motion (reduced-motion preference): he simply stands in place, full
-   size, in front of the wordmark. */
-.is-portrait-still.is-settled .hero-portrait-front {
-  opacity: 1;
+/* No motion (reduced-motion preference, or the clip could not be played):
+   he simply stands in place, full size, in front of the wordmark. */
+.is-portrait-still.is-settled .hero-portrait {
+  z-index: 2;
+  opacity: .98;
   transform: translate3d(-50%, 0, 0) scale(1);
+}
+
+.portrait-overlay {
+  position: absolute;
+  z-index: 0;
+  left: var(--portrait-x, 50%);
+  top: var(--portrait-top, 10vh);
+  width: var(--portrait-width, 31vh);
+  height: var(--portrait-height, 80vh);
+  opacity: 0;
+  transform: translate3d(-50%, 0, 0) scale(var(--portrait-approach, .58))
+    rotate(var(--portrait-lean, 0deg)) scaleY(var(--portrait-bob, 1));
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  transition: opacity .4s ease;
+}
+.is-portrait-walking .portrait-overlay { opacity: 1; }
+.portrait-overlay--front { z-index: 3; transition: none; }
+.is-portrait-walking .portrait-overlay--front { opacity: var(--portrait-front, 0); }
+.is-portrait-held .portrait-overlay:not(.portrait-overlay--front) { opacity: 0; transition: none; }
+
+/* Measured off the footage: the eye line sits at 10.8% of the frame height and
+   the face is 13% of the frame wide at the temples, centred on 50.2%. The head
+   does not move between poses, so the glasses need no per-frame tracking. */
+.portrait-glasses {
+  position: absolute;
+  left: 43.7%;
+  top: 9.45%;
+  width: 13%;
+  height: 2.7%;
+  overflow: visible;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5));
+}
+/* He takes them off only once he has stopped: the hold frame is still, so the
+   glasses can land exactly on the hand instead of chasing a swinging arm. */
+.is-glasses-removing .portrait-glasses {
+  animation: glassesToHand 1.15s cubic-bezier(.45, .05, .25, 1) .3s both;
+}
+@keyframes glassesToHand {
+  0%   { left: 43.7%; top: 9.45%; transform: rotate(0) scale(1); }
+  18%  { left: 43.2%; top: 8.3%;  transform: rotate(-6deg) scale(1.05); }
+  55%  { left: 34%;   top: 30%;   transform: rotate(-38deg) scale(.95); }
+  100% { left: 27.4%; top: 58.2%; transform: rotate(-66deg) scale(.86); }
 }
 
 /* ==========================================================================

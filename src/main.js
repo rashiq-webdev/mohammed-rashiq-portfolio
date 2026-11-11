@@ -1,14 +1,13 @@
 // Boot, orchestration, the frame loop.
 //
 // Order of operations matters here: the page must sit on TRUE black until the
-// fonts and textures are ready, otherwise the sequence starts before its main
-// visual is available.
+// fonts, textures and the portrait are ready, otherwise the sequence starts
+// before its main visual is available.
 
 import { Stage } from './gl/stage.js';
 import { computeLayout } from './scene/layout.js';
 import { buildWord, fontsReady } from './scene/type.js';
 import { Furniture } from './scene/furniture.js';
-import { drawCharacter, CHAR_W, CHAR_H } from './scene/character.js';
 import { sample, letterOrder, CUES, T } from './scene/timeline.js';
 import { damp, clamp } from './lib/ease.js';
 import { initUniverse } from './scene2/boot2.js';
@@ -39,6 +38,7 @@ const app = {
   fired: new Set(),
   pointer: { x: 0, y: 0, tx: 0, ty: 0 },
   running: false,
+  portrait: null,
 };
 
 // --------------------------------------------------------------------------
@@ -67,7 +67,21 @@ async function main() {
   layout();
   window.addEventListener('resize', debounce(layout, 140));
   window.addEventListener('orientationchange', () => setTimeout(layout, 220));
-  setupPortraitLayers();
+  const portrait = document.querySelector('.hero-portrait');
+  if (portrait instanceof HTMLVideoElement && await portraitReady(portrait)) {
+    app.portrait = portrait;
+    portrait.pause();
+    portrait.currentTime = 0;
+    setupPortraitLayers(portrait);
+    layout();
+    app.poses = await Promise.race([loadPoses(portrait.currentSrc), timeout(PORTRAIT_TIMEOUT)]);
+    // the clip loads but its poses could not be lifted: stand him in place
+    if (!app.poses) settlePortraitStill();
+  } else {
+    // No playable clip (unsupported codec, failed request, slow line): never
+    // hold the page on black for it. The masked poster stands in, in place.
+    settlePortraitStill();
+  }
   tick();
   const held = performance.now() - startedAt;
   if (held < MIN_BLACK) await wait(MIN_BLACK - held);
@@ -89,87 +103,165 @@ async function main() {
 // --------------------------------------------------------------------------
 // The portrait walk.
 //
-// The figure is a drawn, rigged character (scene/character.js), painted every
-// frame, so his legs and arms genuinely move as he walks toward the camera.
+// The supplied clip is not footage of a walk: it is four still poses, each
+// held for three quarters of a second. Poses 1, 2 and 4 all have the SAME leg
+// forward and only pose 3 has the other, so played in file order he takes one
+// step and then shuffles. The clip is therefore used only as a source of
+// poses, and the walk itself is built here:
+//   - the poses are re-ordered so the legs strictly alternate, at a natural
+//     cadence, with a short dissolve through each stride instead of a cut;
+//   - the body rises and falls once per step and leans over the planted leg,
+//     pivoting at the feet so the shoes stay on the ground;
+//   - he approaches the camera the whole time and settles on pose 1.
 //
 // Two canvases show the same picture: one BEHIND the WebGL canvas (so the
 // wordmark covers him) and one in FRONT. Cross-fading the front one in is what
 // carries him through the name without a one-frame jump between depths.
 
-const STEP_COUNT = 8;           // steps taken on the way to the camera
+const WALK_PASSES = 4;          // the clip repeats its four poses four times
+const POSE_COUNT = 4;
+// pose indices, one per step: left-leg poses (0, 1, 3) alternate with the
+// only right-leg pose (2); it ends on pose 0, the one the hold is tuned for
+const STEPS = [0, 2, 1, 2, 3, 2, 1, 2, 0];
 const STEP_SECONDS = 0.56;      // ~107 steps a minute: an unhurried walk
+const STRIDE_BLEND = 0.34;      // share of a step spent dissolving to the next pose
+const BOB = 0.011;              // rise at mid-stride, as a fraction of his height
+const LEAN_DEG = 0.7;           // sway over the planted leg
 const APPROACH_FROM = 0.58;     // starting scale; he reaches 1 at the hold
 const FRONT_FROM = 0.10;        // walk progress where the front layer starts...
 const FRONT_TO = 0.55;          // ...and where he is fully in front of the name
 const PLATE_OUT = 0.5;          // seconds for the plate to clear / return
 const PLATE_IN = 0.7;
-const GLASSES_DELAY = 0.35;     // he stops, then takes the glasses off
-const GLASSES_SECONDS = 1.7;
-const IDLE_FRAME = 1000 / 24;   // standing still only needs breathing and blinks
+const PORTRAIT_TIMEOUT = 8000;
 
-function setupPortraitLayers() {
-  const layer = (sel) => {
-    const c = document.querySelector(sel);
-    if (!(c instanceof HTMLCanvasElement)) return null;
-    c.width = CHAR_W;
-    c.height = CHAR_H;
-    return c.getContext('2d');
-  };
-  app.portraitBack = layer('.hero-portrait-back');
-  app.portraitFront = layer('.hero-portrait-front');
+const once = (el, type) => new Promise((r) => el.addEventListener(type, r, { once: true }));
+const timeout = (ms) => new Promise((r) => setTimeout(() => r(null), ms));
+
+/** Resolves true once the clip can be drawn, false if it never will be. */
+function portraitReady(video) {
+  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return Promise.resolve(true);
+  if (video.error) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    const sources = [...video.querySelectorAll('source')];
+    let timer = 0;
+    const finish = (ok) => {
+      clearTimeout(timer);
+      video.removeEventListener('loadeddata', onOk);
+      video.removeEventListener('error', onFail);
+      sources.forEach((s) => s.removeEventListener('error', onFail));
+      resolve(ok);
+    };
+    const onOk = () => finish(true);
+    const onFail = () => finish(false);
+    video.addEventListener('loadeddata', onOk);
+    video.addEventListener('error', onFail);
+    // a failed <source> reports on the source element, not on the video
+    sources.forEach((s) => s.addEventListener('error', onFail));
+    timer = setTimeout(onFail, PORTRAIT_TIMEOUT);
+  });
 }
 
-/** The finished composition with no motion: standing, in front, glasses off. */
+/**
+ * Lift the four poses out of the clip as bitmaps. The clip is read through a
+ * blob so it can be seeked even on a static host without Range support.
+ * Resolves null if anything goes wrong; the caller falls back to a still.
+ */
+async function loadPoses(src) {
+  let url = '';
+  try {
+    const blob = await (await fetch(src)).blob();
+    url = URL.createObjectURL(blob);
+    const v = document.createElement('video');
+    v.muted = true;
+    v.playsInline = true;
+    v.preload = 'auto';
+    v.src = url;
+    await once(v, 'loadeddata');
+    const hold = v.duration / WALK_PASSES / POSE_COUNT;
+    const poses = [];
+    for (let i = 0; i < POSE_COUNT; i++) {
+      const seeked = once(v, 'seeked');
+      v.currentTime = (i + 0.5) * hold;      // the middle of each held pose
+      await seeked;
+      poses.push(await createImageBitmap(v));
+    }
+    return poses;
+  } catch (e) {
+    console.warn('[portrait] poses unavailable:', e.message);
+    return null;
+  } finally {
+    if (url) URL.revokeObjectURL(url);
+  }
+}
+
+function setupPortraitLayers(video) {
+  app.portraitLayers = [...document.querySelectorAll('.hero-portrait-back, .hero-portrait-front')]
+    .filter((c) => c instanceof HTMLCanvasElement)
+    .map((c) => {
+      c.width = video.videoWidth;
+      c.height = video.videoHeight;
+      return c.getContext('2d');
+    });
+  // the glasses ride on both layers, so they are covered by the wordmark
+  // exactly where the figure behind it is
+  const overlay = document.querySelector('.portrait-overlay');
+  if (overlay && !document.querySelector('.portrait-overlay--front')) {
+    const twin = overlay.cloneNode(true);
+    twin.classList.add('portrait-overlay--front');
+    // the twin reuses the original's gradient defs; duplicate ids are invalid
+    twin.querySelector('defs')?.remove();
+    overlay.after(twin);
+  }
+}
+
+/** The finished composition with no motion: full size, in front, no glasses. */
 function settlePortraitStill() {
-  if (!app.portraitFront) return;
-  drawCharacter(app.portraitFront, { phase: 0, walk: 0, glasses: 1, t: 1 });
   root.classList.add('is-portrait-still');
   if (app.stage) app.stage.backgroundAlpha = 1;
 }
 
 function startPortraitWalk(now) {
-  if (reduced || app.walk || !app.portraitFront || !app.portraitBack) return;
-  app.walk = { startedAt: now, frontAt: 0, heldAt: 0, idleAt: 0 };
+  if (reduced || app.walk || !app.poses || !app.portraitLayers?.length) return;
+  app.walk = { startedAt: now, frontAt: 0, held: false, done: false, drawn: '' };
   root.style.setProperty('--portrait-approach', `${APPROACH_FROM}`);
   root.style.setProperty('--portrait-front', '0');
+  drawPose(STEPS[0], STEPS[0], 0);
   root.classList.add('is-portrait-walking');
 }
 
-/** Runs every frame from the moment the walk starts. */
+/** Runs every frame while the walk is live. */
 function stepPortraitWalk(now) {
   const walk = app.walk;
-  if (!walk) return;
+  if (!walk || walk.done) return;
+
+  const stepCount = STEPS.length - 1;
   const elapsed = Math.max(0, now - walk.startedAt) / 1000;
+  const at = Math.min(elapsed / STEP_SECONDS, stepCount);   // in steps
+  const k = Math.min(Math.floor(at), stepCount - 1);
+  const p = at - k;                                         // 0..1 through this step
+  const progress = at / stepCount;
 
-  if (walk.heldAt) {
-    // standing: the glasses come off once, then he just breathes and blinks
-    const since = (now - walk.heldAt) / 1000;
-    const g = clamp((since - GLASSES_DELAY) / GLASSES_SECONDS);
-    if (g >= 1 && now - walk.idleAt < IDLE_FRAME) return;
-    walk.idleAt = now;
-    drawCharacter(app.portraitFront, { phase: 0, walk: 0, glasses: g, t: since });
-    if (!walk.done) {
-      app.stage.backgroundAlpha = clamp((now - walk.frontAt) / (PLATE_IN * 1000));
-      walk.done = app.stage.backgroundAlpha >= 1;
-    }
-    return;
+  if (!walk.held) {
+    // the stride: hold the planted pose, then dissolve to the next one
+    const b = clamp((p - (1 - STRIDE_BLEND)) / STRIDE_BLEND);
+    drawPose(STEPS[k], STEPS[k + 1], b * b * (3 - 2 * b));
+
+    // weight: up over the planted leg at mid-stride, down as the next foot
+    // lands, and a lean that swaps sides with every step
+    const settle = 1 - clamp(at - (stepCount - 1));         // eases out on the last step
+    const bob = 1 + BOB * Math.sin(Math.PI * p) * settle;
+    const side = k % 2 ? -1 : 1;
+    const lean = LEAN_DEG * side * Math.sin(Math.PI * p) * settle;
+    root.style.setProperty('--portrait-bob', bob.toFixed(4));
+    root.style.setProperty('--portrait-lean', `${lean.toFixed(3)}deg`);
+    root.style.setProperty('--portrait-approach',
+      `${APPROACH_FROM + progress * (1 - APPROACH_FROM)}`);
   }
-
-  const at = Math.min(elapsed / STEP_SECONDS, STEP_COUNT);      // in steps
-  const progress = at / STEP_COUNT;
-  // he eases into his stride and brings his feet together on the last step
-  const amp = Math.min(clamp(at / 0.6), clamp(STEP_COUNT - at));
-  const pose = { phase: at * Math.PI, walk: amp * amp * (3 - 2 * amp), glasses: 0, t: elapsed };
-
-  root.style.setProperty('--portrait-approach',
-    `${APPROACH_FROM + progress * (1 - APPROACH_FROM)}`);
 
   // cross-fade from behind the wordmark to in front of it
   const f = clamp((progress - FRONT_FROM) / (FRONT_TO - FRONT_FROM));
   const front = f * f * (3 - 2 * f);
   root.style.setProperty('--portrait-front', front.toFixed(3));
-  if (front < 1) drawCharacter(app.portraitBack, pose);
-  if (front > 0) drawCharacter(app.portraitFront, pose);
   if (front >= 1 && !walk.frontAt) walk.frontAt = now;
 
   // the plate clears as he appears and returns once he is fully in front
@@ -177,12 +269,38 @@ function stepPortraitWalk(now) {
     ? clamp((now - walk.frontAt) / (PLATE_IN * 1000))
     : 1 - clamp(elapsed / PLATE_OUT);
 
-  if (at >= STEP_COUNT) {
-    walk.heldAt = now;
-    if (!walk.frontAt) walk.frontAt = now;
+  if (!walk.held && at >= stepCount) {
+    walk.held = true;
+    drawPose(STEPS[stepCount], STEPS[stepCount], 0);
     root.style.setProperty('--portrait-approach', '1');
-    root.style.setProperty('--portrait-front', '1');
-    root.classList.add('is-portrait-held');
+    root.style.setProperty('--portrait-bob', '1');
+    root.style.setProperty('--portrait-lean', '0deg');
+    root.classList.add('is-portrait-held', 'is-glasses-removing');
+  }
+  if (walk.held && app.stage.backgroundAlpha >= 1) walk.done = true;
+}
+
+/** Paint pose `from` dissolving into pose `to` (blend 0..1) on both layers. */
+function drawPose(from, to, blend) {
+  const key = `${from}:${to}:${blend.toFixed(3)}`;
+  if (app.walk.drawn === key) return;
+  app.walk.drawn = key;
+  for (const ctx of app.portraitLayers) {
+    const { width, height } = ctx.canvas;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.clearRect(0, 0, width, height);
+    if (blend <= 0 || from === to) {
+      ctx.drawImage(app.poses[from], 0, 0, width, height);
+      continue;
+    }
+    // additive, so the two weights sum to one and his body never goes
+    // see-through half way through the dissolve
+    ctx.globalAlpha = 1 - blend;
+    ctx.drawImage(app.poses[from], 0, 0, width, height);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = blend;
+    ctx.drawImage(app.poses[to], 0, 0, width, height);
   }
 }
 
@@ -229,7 +347,7 @@ function layout() {
   app.stage.resize(L);
 
   // Keep the same feet anchor as the source compositor while giving the
-  // walking figure enough height to read clearly in the hero.
+  // walking full-body video enough height to read clearly in the hero.
   let portraitHeight = Math.max(L.hero.h * 0.8, h * 0.53);
   if (L.portrait) {
     // On a phone the word is short and he is as wide as five of its letters,
@@ -240,6 +358,9 @@ function layout() {
   }
   root.style.setProperty('--portrait-top', `${L.hero.feet - portraitHeight}px`);
   root.style.setProperty('--portrait-height', `${portraitHeight}px`);
+  if (app.portrait?.videoWidth && app.portrait?.videoHeight) {
+    root.style.setProperty('--portrait-width', `${portraitHeight * app.portrait.videoWidth / app.portrait.videoHeight}px`);
+  }
 
   const capPx = Math.round(L.word.capH * L.dpr);
   if (!app.word || Math.abs(app.word.capPx - capPx) > 2) {

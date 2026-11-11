@@ -37,7 +37,10 @@ export function computeLayout(w, h) {
 
   const wordW = capH * TARGET_RATIO;
   const cx = w * 0.5;
-  const vCentre = portrait ? h * 0.50 : h * REF.vCentre;
+  // On a phone the figure is far wider than the gap between the two words, so
+  // with the word at mid-screen he blots out the middle of the name. The word
+  // is lifted clear instead and he stands directly beneath it.
+  const vCentre = portrait ? h * 0.335 : h * REF.vCentre;
   const capTop = vCentre - capH * 0.5;
   const baseline = vCentre + capH * 0.5;
 
@@ -59,10 +62,10 @@ export function computeLayout(w, h) {
 
   if (portrait) {
     // on a phone the word is width-bound and short, so tying the man to it would
-    // shrink him to a bystander; he is scaled to the viewport instead and the
-    // wordmark crosses his torso
-    heroH = h * 0.54;
+    // shrink him to a bystander; he is scaled to the viewport instead, and
+    // stands under the name: his head stops just short of the baseline
     feet = h * 0.885;
+    heroH = Math.min(h * 0.54, feet - baseline - h * 0.012);
   }
 
   return {

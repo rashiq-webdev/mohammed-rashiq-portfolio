@@ -16,6 +16,7 @@ import { initUniverse } from './scene2/boot2.js';
 import { initChrono } from './scene3/boot3.js';
 import { initGallery } from './scene4/boot4.js';
 import { initFinale } from './scene6/boot6.js';
+import { startSound } from './lib/bgaudio.js';
 
 // a cinematic page manages its own positions; the browser restoring an old
 // scroll offset mid-boot yanks the visitor (and any scripted anchor) around
@@ -110,7 +111,11 @@ async function main() {
   initFinale().then((f) => { app.finale = f; })
     .catch((e) => console.warn('[gireesh] finale unavailable:', e.message));
 
-  if (!playing) return awaitGesture();
+  // The music leads: it must be sounding before the opening starts. If the
+  // browser will not play audio until the visitor interacts, hold on the Enter
+  // button; that click unlocks the sound and the sequence begins with it.
+  const sounding = await startSound();
+  if (!playing || !sounding) return awaitGesture();
   begin();
 }
 
@@ -156,7 +161,7 @@ function begin() {
 function awaitGesture() {
   bootEnter.hidden = false;
   bootEnter.addEventListener('click', async () => {
-    await app.clips.hero.play();
+    await Promise.all([startSound(), app.clips.hero.play()]);
     begin();
   }, { once: true });
 }

@@ -41,8 +41,9 @@ function fadeTo(target, then) {
   const from = audio.volume;
   const t0 = performance.now();
   const step = (now) => {
-    const k = Math.min(1, (now - t0) / FADE_MS);
-    audio.volume = from + (target - from) * k;
+    // a frame's timestamp can predate t0, so k is clamped at both ends
+    const k = Math.min(1, Math.max(0, (now - t0) / FADE_MS));
+    audio.volume = Math.min(1, Math.max(0, from + (target - from) * k));
     if (k < 1) fadeId = requestAnimationFrame(step);
     else if (then) then();
   };
@@ -57,15 +58,30 @@ function arm() {
 }
 
 function start() {
-  if (!audio.paused) return;
-  audio.play().then(() => {
+  if (!audio.paused) return Promise.resolve(true);
+  return audio.play().then(() => {
     fadeTo(VOLUME);
     paint();
+    return true;
   }).catch(() => {
     // refused before any interaction: wait for the first gesture
     arm();
     paint();
+    return false;
   });
+}
+
+/**
+ * Start the music and report whether it is actually sounding.
+ *
+ * The opening sequence calls this BEFORE it begins, so the track is already
+ * playing when the first letter lands. Where the browser refuses audio until
+ * the visitor interacts, this resolves false and the opening holds on its
+ * Enter button instead; that click is the gesture that unlocks the sound.
+ */
+export function startSound() {
+  if (!wanted) return Promise.resolve(true);
+  return start();
 }
 
 function stop() {
@@ -92,4 +108,7 @@ audio.addEventListener('error', () => { btn.hidden = true; }, { once: true });
 
 document.body.appendChild(btn);
 paint();
-if (wanted) start();
+// The opening (main.js) starts the track through startSound(). Arming here as
+// well means that if the opening never runs (no WebGL, script error), the
+// first click or key press still brings the music in.
+arm();

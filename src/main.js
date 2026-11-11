@@ -135,19 +135,15 @@ function chooseSound() {
 
       // Start audio synchronously within the trusted button click. If sound is
       // declined, remember that choice for this visit and keep the hero muted.
-      const audio = setSoundEnabled(enabled);
+      // Audio is best effort: a browser or network audio failure must never
+      // leave the visitor trapped on the choice screen. The visible hero is
+      // gated only on its own video being able to play.
+      setSoundEnabled(enabled);
       app.clips.hero.el.currentTime = 0;
       const video = app.clips.hero.play();
-      const [soundStarted, videoStarted] = await Promise.all([audio, video]);
-
-      if (enabled && !soundStarted) {
-        soundPromptCopy.textContent = 'Sound could not start. Try again or continue silently.';
-        soundYes.disabled = false;
-        soundNo.disabled = false;
-        busy = false;
-        return;
-      }
-      if (!videoStarted) {
+      try {
+        await video;
+      } catch {
         soundPromptCopy.textContent = 'The opening could not start. Please try again.';
         soundYes.disabled = false;
         soundNo.disabled = false;

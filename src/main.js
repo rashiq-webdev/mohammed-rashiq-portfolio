@@ -111,11 +111,11 @@ async function main() {
   initFinale().then((f) => { app.finale = f; })
     .catch((e) => console.warn('[gireesh] finale unavailable:', e.message));
 
-  // The music leads: it must be sounding before the opening starts. If the
-  // browser will not play audio until the visitor interacts, hold on the Enter
-  // button; that click unlocks the sound and the sequence begins with it.
-  const sounding = await startSound();
-  if (!playing || !sounding) return awaitGesture();
+  // Attempt the music, but do not let autoplay policy hold the visual opening
+  // on black. The background-audio module resumes on the visitor's first
+  // interaction if the browser rejects playback here.
+  void startSound();
+  if (!playing) return awaitGesture();
   begin();
 }
 

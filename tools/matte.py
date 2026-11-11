@@ -171,6 +171,13 @@ def frame_alpha(bgr, cfg):
         dL = np.maximum(plate - L, 0.0)
     else:
         dL = np.maximum(L - plate, 0.0)
+    # bright_gain: a mid-grey backdrop has subject tones on BOTH sides of it.
+    # The suit is darker, but the white shirt and cuffs are brighter, and with
+    # a one-sided distance they key out as holes in his chest. The bright side
+    # has less headroom (grey -> white is a short trip), hence the gain.
+    bg_gain = cfg.get("bright_gain", 0.0)
+    if bg_gain > 0:
+        dL = np.maximum(dL, np.maximum(L - plate, 0.0) * bg_gain)
     dC = np.sqrt((A - aR) ** 2 + (B - bR) ** 2)        # tinted vs neutral backdrop
     dist = dL * cfg["w_lum"] + dC * cfg["w_chroma"]
 
@@ -211,6 +218,28 @@ def frame_alpha(bgr, cfg):
                                   np.ones((cfg["seal"], cfg["seal"]), np.uint8))
         holes = (fill_holes(sealed, cfg["hole_min"]).astype(bool)
                  & ~sealed.astype(bool))
+        # chest_only keeps the recovery to the shirt. The shaded folds of a
+        # white shirt beside the tie are the backdrop's own grey and enclosed
+        # by suit, tie and collar; but so is the gap between a swinging arm
+        # and the torso, which is real backdrop and must stay clear. The two
+        # are told apart by position: the shirt sits on the body's centre
+        # line in the top third of the figure, arm gaps sit out at the sides.
+        if cfg.get("chest_only", 0) and holes.any():
+            ys_b, xs_b = np.nonzero(fg_bin)
+            bx0, bx1 = xs_b.min(), xs_b.max()
+            by0, by1 = ys_b.min(), ys_b.max()
+            cx_b = 0.5 * (bx0 + bx1)
+            half = 0.16 * (bx1 - bx0)
+            zone = np.zeros_like(holes)
+            zone[by0:int(by0 + 0.36 * (by1 - by0)),
+                 max(0, int(cx_b - half)):int(cx_b + half)] = True
+            n_h, lab_h, _st_h, _ch = cv2.connectedComponentsWithStats(
+                holes.astype(np.uint8), 8)
+            ok_h = [i for i in range(1, n_h) if zone[lab_h == i].all()]
+            holes = np.isin(lab_h, ok_h) if ok_h else np.zeros_like(holes)
+            # folds narrower than the seal kernel are bridged by the close
+            # itself and never show up as holes; take those from the seal
+            holes |= sealed.astype(bool) & zone & ~fg_bin.astype(bool)
         solid = fg_bin.astype(bool) | holes
     else:
         # hole_min = 0 disables recovery entirely. Only turn it on for a subject
@@ -235,6 +264,13 @@ def frame_alpha(bgr, cfg):
     C_fg = cv2.dilate(dC, k)                     # most saturated tone nearby
     a_chr = np.clip(dC / np.maximum(C_fg, 6.0), 0.0, 1.0)
     ratio = np.maximum(a_lum, a_chr).astype(np.float32)
+    if bg_gain > 0:
+        L_hi = cv2.dilate(L, k)                  # brightest tone nearby = shirt
+        a_hi = np.clip((L - plate) / np.maximum(L_hi - plate, 12.0), 0.0, 1.0)
+        # only where a genuinely bright subject tone is nearby; otherwise
+        # backdrop noise divided by the 12.0 floor reads as partial coverage
+        a_hi[(L_hi - plate) * bg_gain < cfg["fg_thr"]] = 0.0
+        ratio = np.maximum(ratio, a_hi).astype(np.float32)
 
     # Trimap. The coverage ratio is only meaningful next to an actual subject:
     # evaluated on bare floor it happily reports 0.8 for a scuff mark and paints
@@ -274,6 +310,21 @@ def frame_alpha(bgr, cfg):
         gate = smoothstep(0.30, 0.72, band)
         depth = np.linspace(0.0, 1.0, band.shape[0], dtype=np.float32)[:, None]
         a[y0:, :] = band * (1.0 - depth * (1.0 - gate))
+
+    # Speck removal: on a shadowless backdrop anything detached from the body
+    # (a smudge of contact shadow between the shoes) is noise, never subject.
+    if cfg.get("speck_min", 0) > 0:
+        n_s, lab_s, st_s, _cs = cv2.connectedComponentsWithStats(
+            (a > 0.5).astype(np.uint8), 8)
+        if n_s > 1:
+            big = 1 + int(np.argmax(st_s[1:, cv2.CC_STAT_AREA]))
+            keep = cv2.dilate((lab_s == big).astype(np.uint8),
+                              np.ones((7, 7), np.uint8))
+            n_a, lab_a, _sa, _ca = cv2.connectedComponentsWithStats(
+                (a > 0.02).astype(np.uint8), 8)
+            good = np.unique(lab_a[keep > 0])
+            good = good[good != 0]
+            a = a * np.isin(lab_a, good)
 
     # Silhouette solidify (black-void footage). Against true black the suit's
     # deepest folds carry no signal at all, but the OUTLINE always does: close
@@ -359,6 +410,16 @@ PRESETS = {
                band=26, seal=9, hole_min=0, gf_radius=4, gf_eps=1e-4, choke=0.06,
                out_lo=0.14, out_hi=0.96, despill=1.0, unmul_floor=0.22,
                est_win=17, ema=0.55, floor_guard=0.14),
+    # dark suit + WHITE shirt on a flat, evenly lit LIGHT-GREY backdrop
+    # (generated footage of the site owner: no floor line, no cast shadow).
+    # Same family as v1, but two-sided in luminance (bright_gain) so the shirt
+    # and cuffs survive, and with no floor guard: there is no glossy floor, and
+    # his shoes sit well above the bottom band.
+    "grey": dict(ring=14, ring_min_L=150, w_lum=1.0, w_chroma=3.6, lo=12, hi=46,
+                 bg_thr=10, fg_thr=44, edge_barrier=0, seed_edges="ltrb",
+                 band=26, seal=9, hole_min=1, chest_only=1, speck_min=1, gf_radius=4, gf_eps=1e-4,
+                 choke=0.06, out_lo=0.14, out_hi=0.96, despill=1.0,
+                 unmul_floor=0.22, est_win=17, ema=0.55, bright_gain=4.0),
     # black top + CREAM trousers + WHITE sneakers on pure white
     "v2": dict(ring=10, ring_min_L=200, w_lum=1.0, w_chroma=2.6, lo=15, hi=32,
                bg_thr=13, fg_thr=34, edge_barrier=26, seed_edges="ltr",

@@ -41,6 +41,27 @@
 #finBack { z-index: 1; }
 #finMan { z-index: 3; pointer-events: none; }
 
+.fin__wordmark {
+  position: absolute;
+  z-index: 2;
+  top: 6vh;
+  left: 50%;
+  width: 100%;
+  margin: 0;
+  color: #f1ddd4;
+  font-family: var(--disp);
+  font-size: clamp(38px, 9vw, 148px);
+  line-height: .82;
+  letter-spacing: -.015em;
+  text-align: center;
+  text-shadow: 0 4px 38px rgba(255, 211, 188, .18);
+  opacity: 0;
+  transform: translate(-50%, 18px);
+  transition: opacity 1.25s ease, transform 1.4s var(--ease-out);
+  pointer-events: none;
+}
+.fin.is-word .fin__wordmark { opacity: .96; transform: translate(-50%, 0); }
+
 /* dims frame 1 as frame 2 advances over it */
 .fin__dim {
   position: absolute;
@@ -70,8 +91,8 @@
 .fin__frame2 img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: 50% 42%;
+  object-fit: contain;
+  object-position: center;
   display: block;
   user-select: none;
 }
@@ -206,6 +227,7 @@
 .fin.is-portrait .f-cap--tl,
 .fin.is-portrait .f-cap--blw { display: none; }
 .fin.is-portrait .f-cap--quote { top: auto; bottom: 24vh; }
+.fin.is-portrait .fin__wordmark { top: 10vh; font-size: clamp(42px, 15vw, 84px); }
 .fin.is-portrait .fin__bar {
   flex-direction: column;
   gap: 10px;
@@ -219,7 +241,8 @@
 }
 .fin.is-set .f-cap,
 .fin.is-set .fin__bar { opacity: 1; transform: none; filter: none; }
+.fin.is-set .fin__wordmark { opacity: 1; transform: translate(-50%, 0); }
 
 @media (prefers-reduced-motion: reduce) {
-  .f-cap, .fin__bar { transition-duration: 0.01ms; transition-delay: 0s; }
+  .f-cap, .fin__bar, .fin__wordmark { transition-duration: 0.01ms; transition-delay: 0s; }
 }

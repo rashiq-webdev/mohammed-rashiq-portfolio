@@ -48,6 +48,7 @@ export async function initChrono() {
     el.type = 'button';
     el.className = 'yr';
     el.dataset.i = String(i);
+    el.dataset.year = String(y.year);
     el.setAttribute('aria-label', `${y.year} — ${y.key}`);
     el.innerHTML =
       `<span class="yr__frame">`

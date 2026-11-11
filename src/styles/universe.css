@@ -22,28 +22,29 @@
 .universe {
   position: relative;
   height: 100svh;
-  background: #000;
+  background: radial-gradient(ellipse at 50% 76%, #260b0c 0%, #0b0506 46%, #000 78%);
   overflow: hidden;
   /* hard cut from the hero: two scenes, not a gradient between them */
   box-shadow: 0 -1px 0 0 #000;
 }
 
-#uniFilm {
+.universe__portrait {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  /* the film is 16:9; any other viewport crops rather than letterboxes,
-     keeping the figure centred and the frame full-bleed */
-  object-fit: cover;
-  object-position: 50% 42%;
+  left: 50%;
+  bottom: -1vh;
+  height: min(78svh, 820px);
+  width: auto;
+  max-width: 94vw;
+  object-fit: contain;
+  object-position: center bottom;
   opacity: 0;
-  transform: scale(1.045);
+  transform: translateX(-50%) scale(1.025);
   transition: opacity 1.9s var(--ease-out), transform 3.2s var(--ease-out);
+  pointer-events: none;
 }
-.universe.is-on #uniFilm {
+.universe.is-on .universe__portrait {
   opacity: 1;
-  transform: scale(1);
+  transform: translateX(-50%) scale(1);
 }
 
 /* --------------------------------------------------------------------------
@@ -101,6 +102,7 @@
 
 @media (max-width: 760px) {
   .universe__name { letter-spacing: 0.18em; text-indent: 0.18em; }
+  .universe__portrait { height: min(68svh, 660px); bottom: 0; }
 }
 
 /* breathes to black across the film's loop point so the cut is never seen,
@@ -113,15 +115,17 @@
   pointer-events: none;
   transition: opacity 0.45s ease;
 }
+.universe.is-on .universe__veil { opacity: 0; }
 
 .universe.is-fallback::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: #000 url('../../public/media/universe.jpg') center / cover no-repeat;
+  background: radial-gradient(ellipse at 50% 76%, #260b0c 0%, #0b0506 46%, #000 78%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #uniFilm, .universe__title { transition-duration: 0.01ms; transition-delay: 0s; transform: none; }
+  .universe__portrait, .universe__title { transition-duration: 0.01ms; transition-delay: 0s; }
+  .universe__portrait { transform: translateX(-50%); }
   .universe.is-on .universe__title { transform: translate(-50%, 0); }
 }

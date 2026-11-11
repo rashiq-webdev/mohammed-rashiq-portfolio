@@ -79,7 +79,7 @@ export class Universe {
     const gl = this.gl;
     const [grain, fig] = await Promise.all([
       loadImage('public/tex/grain.png'),
-      loadImage('public/tools/figure.png'),
+      loadImage('public/images/mohammed-rashiq-professional.png'),
     ]);
     upload(gl, this.tex.grain, grain);
     upload(gl, this.tex.figure, fig);

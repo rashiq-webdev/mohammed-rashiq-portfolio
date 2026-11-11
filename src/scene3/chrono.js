@@ -75,7 +75,7 @@ export class Chrono {
   async load() {
     const [grain, fig] = await Promise.all([
       loadImage('public/tex/grain.png'),
-      loadImage('public/years/figure.png'),
+      loadImage('public/images/mohammed-rashiq-professional.png'),
     ]);
     upload(this.gl, this.tex.grain, grain);
     upload(this.gl, this.tex.figure, fig);

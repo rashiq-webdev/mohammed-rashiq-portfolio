@@ -75,7 +75,7 @@ export function computeLayout(w, h) {
     hero: { h: heroH, cx, feet },
     // clear of the header band and clear of his head; it renders in front of
     // the typography, so it stays readable wherever it lands
-    welcomeY: portrait ? (feet - heroH) - h * 0.075 : h * 0.175,
+    welcomeY: h * (portrait ? 0.15 : narrow ? 0.32 : 0.10),
     legend: portrait
       ? { x: w * 0.955, y: capTop - h * 0.052, h: 20, alignRight: true }
       : { x: w * REF.legend.x, y: h * REF.legend.y,

@@ -38,6 +38,7 @@ uniform float uTime;
 uniform float uEmber;      // 0..1 glow behind the type
 uniform vec2  uEmberAt;    // normalised centre
 uniform float uAspect;
+uniform float uAlpha;      // 0..1 plate fades out while the portrait sits behind the word
 out vec4 frag;
 
 void main(){
@@ -55,7 +56,7 @@ void main(){
   float vig = 1.0 - smoothstep(0.38, 1.15, length(v));
   col *= mix(0.35, 1.0, vig);
 
-  frag = vec4(col, 1.0);
+  frag = vec4(col, 1.0) * uAlpha;       // premultiplied
 }`;
 
 // --------------------------------------------------------------------------

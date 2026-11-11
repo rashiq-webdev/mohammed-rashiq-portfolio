@@ -43,12 +43,8 @@ export async function initFinale() {
   const frame2Img = document.getElementById('finFrame2Img');
   let frame2Ready = false;
   if (frame2 && frame2Img) {
-    // canonical home first, then the naming pattern the reference images
-    // use; while the image is absent each miss logs one benign 404
     const candidates = [
-      'footer%202nd%20image.jpg',
-      'public/fin/frame2.jpg',
-      'Footer%20image%202.jpg',
+      'public/images/mohammed-rashiq-professional.png',
     ];
     (function tryNext(i) {
       if (i >= candidates.length) return;
@@ -123,6 +119,7 @@ export async function initFinale() {
       if (dim) dim.style.opacity = (e * 0.5).toFixed(3);
     }
 
+    if (s.word > 0) section.classList.add('is-word');
     if (s.caps > 0) section.classList.add('is-caps');
     if (s.bar > 0) section.classList.add('is-bar');
     state.raf = requestAnimationFrame(frame);

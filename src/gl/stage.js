@@ -28,6 +28,7 @@ export class Stage {
     this.canvas = canvas;
     this.gl = createGL(canvas);
     this.ok = !!this.gl;
+    this.backgroundAlpha = 1;      // 0 lets the DOM portrait show through the canvas
     if (!this.ok) return;
 
     const gl = this.gl;
@@ -115,20 +116,24 @@ export class Stage {
     const aspect = W / H;
     gl.bindVertexArray(this.quad);
 
-    gl.clearColor(0, 0, 0, 1);
+    const bgAlpha = Math.min(1, Math.max(0, this.backgroundAlpha));
+    gl.clearColor(0, 0, 0, bgAlpha);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     const px = this.parallax.x;
     const py = this.parallax.y;
 
     // ---- 1 plate --------------------------------------------------------
-    {
+    // While the portrait walks up from behind the wordmark the plate fades
+    // out so he shows through the canvas; once he is in front it fades back.
+    if (bgAlpha > 0) {
       const p = this.progs.bg;
       gl.useProgram(p.p);
       gl.uniform1i(p.u.uGrain, bind(gl, this.tex.grain, 0));
       gl.uniform1f(p.u.uTime, time);
       gl.uniform1f(p.u.uEmber, state.ember);
       gl.uniform1f(p.u.uAspect, aspect);
+      gl.uniform1f(p.u.uAlpha, bgAlpha);
       gl.uniform2f(p.u.uEmberAt, this.layout.ember.x, this.layout.ember.y);
       this._quad(p, [0, 0, W, H]);
     }

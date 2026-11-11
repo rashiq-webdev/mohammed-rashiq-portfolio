@@ -1,15 +1,15 @@
-# GIREESH — cinematic portfolio
+# Mohammed Rashiq H — software engineering portfolio
 
-Two scenes so far, both WebGL, no frameworks and no build step.
+Static portfolio personalized for Mohammed Rashiq H, built with HTML, CSS, and
+WebGL. It has no frameworks or build step. Profile, project, education, and
+certification content is based on the supplied résumé.
 
-**Scene 1 — the opening.** Black screen → the man walks out of the dark → the
-GIREESH wordmark materialises behind him → chips, arrows and dots snap into
-place → header draws itself in → the composition settles and breathes.
+**Scene 1 — the opening.** Mohammed's portrait fades in → the
+MOHAMMED RASHIQ wordmark materialises behind him → the software-engineering
+specialties, navigation, and scene details come into place.
 
-**Scene 2 — the creative universe.** The supplied film, played as the section:
-the visitor scrolls into it, it arrives from black, and a veil breathes over
-the 10-second loop point so the wrap is never seen as a cut. Decoding stops
-whenever the section is off screen.
+**Scene 2 — the technology stack.** Mohammed's portrait takes the stage over
+a deep red-black field as the visitor scrolls into the chapter.
 
 **Scene 3 — the time machine.** A warm black room → the timeline rail draws
 itself → a giant clock resolves → six year cards arrive → the floor mechanism

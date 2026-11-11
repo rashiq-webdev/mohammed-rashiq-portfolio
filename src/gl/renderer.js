@@ -3,7 +3,7 @@
 
 export function createGL(canvas, opts = {}) {
   const gl = canvas.getContext('webgl2', {
-    alpha: false,
+    alpha: true,
     antialias: false,
     depth: false,
     stencil: false,

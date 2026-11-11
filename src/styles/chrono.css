@@ -214,6 +214,7 @@
 .yr__frame {
   position: relative;
   display: block;
+  overflow: hidden;
   padding: 7px;
   border-radius: 10px;
   background:
@@ -243,7 +244,12 @@
     brightness(calc(.62 + .48 * var(--near, 0)))
     contrast(1.05);
   transition: filter .5s ease;
+  transform: scale(var(--face-zoom, 1));
+  transform-origin: 50% var(--face-focus, 50%);
 }
+.yr[data-year="2021"] .yr__img { --face-zoom: 1.32; --face-focus: 35%; object-position: 50% 35%; }
+.yr[data-year="2024"] .yr__img { --face-zoom: 1.55; --face-focus: 12%; object-position: 50% 8%; }
+.yr[data-year="2025"] .yr__img { --face-zoom: 2.15; --face-focus: 28%; object-position: 50% 28%; }
 
 .yr__body {
   display: block;

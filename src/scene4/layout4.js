@@ -10,46 +10,22 @@
 export const FRAME = [1600, 900];
 
 export const CARDS = [
-  { id: 'p01_timeless', title: 'Timeless Experiences',
-    box: [213, 72, 384, 273], depth: 0.45,
-    tint: [0.309, 0.334, 0.382] },
-  { id: 'p02_game', title: 'More Than A Game',
-    box: [63, 251, 428, 269], depth: 0.25,
-    tint: [0.249, 0.267, 0.295] },
-  { id: 'p03_build', title: 'Build Without Limits',
-    box: [566, 41, 471, 288], depth: 0.6,
-    tint: [0.414, 0.291, 0.291] },
-  { id: 'p04_driven', title: 'Driven by Better Design',
-    box: [998, 95, 460, 377], depth: 0.45,
-    tint: [0.322, 0.278, 0.261] },
-  { id: 'p05_ideas', title: 'Your Ideas In Motion',
-    box: [394, 358, 232, 198], depth: 0.8,
-    tint: [0.39, 0.303, 0.234] },
-  { id: 'p06_sound', title: 'Sound & Second Motion',
-    box: [568, 364, 173, 203], depth: 0.9,
-    tint: [0.336, 0.324, 0.333] },
-  { id: 'p07_food', title: 'Good Food Brighter Moods',
-    box: [698, 366, 211, 204], depth: 1.0,
-    tint: [0.336, 0.243, 0.217] },
-  { id: 'p08_travel', title: 'Travel Explore Belong',
-    box: [844, 370, 195, 206], depth: 0.9,
-    tint: [0.26, 0.32, 0.366] },
-  { id: 'p09_space', title: 'Find Your Space',
-    box: [988, 364, 231, 208], depth: 0.8,
-    tint: [0.336, 0.283, 0.269] },
-  { id: 'p10_play', title: 'Play Create Repeat',
-    box: [1181, 251, 355, 242], depth: 0.3,
-    tint: [0.448, 0.305, 0.235] },
-  { id: 'p11_cleaner', title: 'Designing A Cleaner Tomorrow',
-    box: [118, 467, 345, 243], depth: 0.1,
-    tint: [0.311, 0.339, 0.263] },
-  { id: 'p12_steps', title: 'Small Steps Big Change',
-    box: [1139, 478, 325, 234], depth: 0.1,
-    tint: [0.31, 0.317, 0.302] },
+  { id: 'p01_timeless', title: 'Timeless Experiences', box: [213, 72, 384, 273], depth: 0.45, tint: [0.309, 0.334, 0.382] },
+  { id: 'p02_game', title: 'More Than A Game', box: [63, 251, 428, 269], depth: 0.25, tint: [0.249, 0.267, 0.295] },
+  { id: 'p03_build', title: 'Build Without Limits', box: [566, 41, 471, 288], depth: 0.6, tint: [0.414, 0.291, 0.291] },
+  { id: 'p04_driven', title: 'Driven by Better Design', box: [998, 95, 460, 377], depth: 0.45, tint: [0.322, 0.278, 0.261] },
+  { id: 'p05_ideas', title: 'Your Ideas In Motion', box: [394, 358, 232, 198], depth: 0.8, tint: [0.39, 0.303, 0.234] },
+  { id: 'p06_sound', title: 'Sound & Second Motion', box: [568, 364, 173, 203], depth: 0.9, tint: [0.336, 0.324, 0.333] },
+  { id: 'p07_food', title: 'Good Food Brighter Moods', box: [698, 366, 211, 204], depth: 1.0, tint: [0.336, 0.243, 0.217] },
+  { id: 'p08_travel', title: 'Travel Explore Belong', box: [844, 370, 195, 206], depth: 0.9, tint: [0.26, 0.32, 0.366] },
+  { id: 'p09_space', title: 'Find Your Space', box: [988, 364, 231, 208], depth: 0.8, tint: [0.336, 0.283, 0.269] },
+  { id: 'p10_play', title: 'Play Create Repeat', box: [1181, 251, 355, 242], depth: 0.3, tint: [0.448, 0.305, 0.235] },
+  { id: 'p11_cleaner', title: 'Designing A Cleaner Tomorrow', box: [118, 467, 345, 243], depth: 0.1, tint: [0.311, 0.339, 0.263] },
+  { id: 'p12_steps', title: 'Small Steps Big Change', box: [1139, 478, 325, 234], depth: 0.1, tint: [0.31, 0.317, 0.302] },
 ];
 
 // the central figure: crop box in frame px (his lighting is baked in)
-export const PERSON = { x: 718, y: 483, w: 160, h: 335 };
+export const PERSON = { x: 690, y: 483, w: 220, h: 330 };
 
 // the floor's lit ellipses (centre x, centre y, rx, ry) and the overhead ring,
 // used by the live glints the canvas draws over the baked plate
@@ -72,11 +48,11 @@ export function fitCover(w, h) {
 // Entries: card index -> centre x/y (viewport fractions), width (vw fraction).
 // --------------------------------------------------------------------------
 export const PORTRAIT = new Map([
-  [2, { cx: 0.50, cy: 0.235, w: 0.80 }],   // build
-  [0, { cx: 0.235, cy: 0.385, w: 0.50 }],  // timeless
-  [3, { cx: 0.77, cy: 0.39, w: 0.48 }],    // driven
-  [6, { cx: 0.325, cy: 0.53, w: 0.29 }],   // food
-  [7, { cx: 0.675, cy: 0.53, w: 0.29 }],   // travel
-  [10, { cx: 0.20, cy: 0.815, w: 0.48 }],  // cleaner
-  [11, { cx: 0.80, cy: 0.815, w: 0.48 }],  // steps
+  [2, { cx: 0.50, cy: 0.235, w: 0.80 }],
+  [0, { cx: 0.235, cy: 0.385, w: 0.50 }],
+  [3, { cx: 0.77, cy: 0.39, w: 0.48 }],
+  [6, { cx: 0.325, cy: 0.53, w: 0.29 }],
+  [7, { cx: 0.675, cy: 0.53, w: 0.29 }],
+  [10, { cx: 0.20, cy: 0.815, w: 0.48 }],
+  [11, { cx: 0.80, cy: 0.815, w: 0.48 }],
 ]);

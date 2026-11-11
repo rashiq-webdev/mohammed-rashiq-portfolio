@@ -488,6 +488,9 @@ html.is-booting .hdr { opacity: 0; }
   transition: background .35s, border-color .35s, letter-spacing .35s;
 }
 .boot__enter:hover { background: var(--ink); border-color: var(--ink); letter-spacing: .4em; }
+/* once the Enter button is offered the loading bar is finished: without this
+   it runs straight through the button's label */
+.boot.is-gate .boot__bar { opacity: 0; transition: opacity .3s ease; }
 
 .fallback {
   position: absolute; inset: 0;

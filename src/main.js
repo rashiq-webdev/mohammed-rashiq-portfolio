@@ -159,6 +159,7 @@ function begin() {
 
 /** Autoplay was refused — offer a single deliberate entry point. */
 function awaitGesture() {
+  boot.classList.add('is-gate');      // loading is over: the bar gives way to the button
   bootEnter.hidden = false;
   bootEnter.addEventListener('click', async () => {
     await Promise.all([startSound(), app.clips.hero.play()]);

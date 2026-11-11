@@ -142,3 +142,27 @@
   .profile__projects article { min-height: 0; }
   .profile__role { line-height: 1.8; }
 }
+
+/* --------------------------------------------------------------------------
+   Scroll reveals (src/lib/reveal.js adds .js-reveal, then .is-in per block).
+   -------------------------------------------------------------------------- */
+.profile.js-reveal .profile__intro > *,
+.profile.js-reveal .profile__metrics > div,
+.profile.js-reveal .profile__panel,
+.profile.js-reveal .profile__sectionhead,
+.profile.js-reveal .profile__projects article {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity .9s var(--ease-out, ease-out) var(--d, 0ms),
+              transform 1.1s var(--ease-out, ease-out) var(--d, 0ms),
+              border-color .3s ease;
+}
+.profile.js-reveal .is-in { opacity: 1 !important; transform: none !important; }
+.profile__metrics strong { font-variant-numeric: tabular-nums; }
+.profile__projects article:hover,
+.profile__metrics > div:hover { border-color: rgba(216, 93, 72, .55); }
+
+/* the name must hold one line on a phone: "H" alone on a second line reads
+   as a mistake */
+.profile__intro h2 { font-size: clamp(30px, 10.2vw, 112px); }
+.profile__metrics strong b { font-weight: inherit; }

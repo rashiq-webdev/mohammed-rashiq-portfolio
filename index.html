@@ -122,14 +122,19 @@
       <h2 class="universe__name">My Tech<br>Stack</h2>
       <p class="universe__sub">Web · Mobile · Automation</p>
     </header>
-    <ul class="sr-only">
-      <li>React.js, Redux, Context API, Hooks</li><li>JavaScript, TypeScript, HTML5, CSS3, Sass</li>
-      <li>Material UI, Tailwind CSS, styled-components</li><li>Node.js, Express.js, REST APIs</li>
-      <li>MongoDB, Mongoose</li><li>Ionic React, Electron.js</li>
-      <li>Playwright.js, Zustand</li><li>Git, GitHub, GitLab, Postman, Figma, Agile/Scrum</li>
+    <!-- the stack itself: four groups either side of the figure, arriving in turn -->
+    <ul class="universe__stack" id="uniStack">
+      <li style="--i:0"><b>Frontend</b><span>React.js · Redux · Context API · Hooks</span></li>
+      <li style="--i:1"><b>Languages</b><span>JavaScript · TypeScript · HTML5 · CSS3 · Sass</span></li>
+      <li style="--i:2"><b>UI Libraries</b><span>Material UI · Tailwind CSS · styled-components</span></li>
+      <li style="--i:3"><b>Backend</b><span>Node.js · Express.js · REST APIs</span></li>
+      <li style="--i:4"><b>Database</b><span>MongoDB · Mongoose</span></li>
+      <li style="--i:5"><b>Mobile &amp; Desktop</b><span>Ionic React · Electron.js</span></li>
+      <li style="--i:6"><b>Testing &amp; State</b><span>Playwright.js · Zustand</span></li>
+      <li style="--i:7"><b>Workflow</b><span>Git · GitHub · GitLab · Postman · Figma · Agile/Scrum</span></li>
     </ul>
     <img class="universe__portrait" id="uniFilm"
-         src="public/images/mohammed-rashiq-professional.png" alt="Mohammed Rashiq" draggable="false">
+         src="public/images/mohammed-rashiq-walk.webp" alt="Mohammed Rashiq" draggable="false">
     <div class="universe__veil" id="uniVeil" aria-hidden="true"></div>
   </section>
 
@@ -174,7 +179,7 @@
       <div class="gallery__world">
         <div class="gallery__deck" id="galleryDeck"></div>
         <img class="gallery__person" id="galleryPerson"
-             src="public/images/mohammed-rashiq-professional.png" alt="" draggable="false">
+             src="public/images/mohammed-rashiq-professional.webp" alt="" draggable="false">
       </div>
 
       <h2 class="g-label g-label--projects" id="galleryTitle">Projects</h2>
@@ -185,7 +190,7 @@
         Scroll<br>Explore<br>Interact
       </p>
       <p class="g-label g-label--real" aria-hidden="true">
-        Real<br>Projects<br>Real<br>Stories
+        Real<br>Work<br>Real<br>Results
       </p>
       <p class="g-label g-label--tomorrow" aria-hidden="true">
         Building<br>A Brighter<br>Tomorrow
@@ -205,9 +210,9 @@
       </header>
 
       <div class="profile__metrics" aria-label="Selected engineering results">
-        <div><strong>51 / 51</strong><span>AIMS DAST checks passed</span></div>
-        <div><strong>30 → 3</strong><span>Node.js audit advisories</span></div>
-        <div><strong>0</strong><span>Critical React advisories after remediation</span></div>
+        <div><strong><b data-count="51">51</b> / <b data-count="51">51</b></strong><span>AIMS DAST checks passed</span></div>
+        <div><strong>30 → <b data-count="3" data-from="30">3</b></strong><span>Node.js audit advisories</span></div>
+        <div><strong><b data-count="0" data-from="9">0</b></strong><span>Critical React advisories after remediation</span></div>
       </div>
 
       <div class="profile__columns">
@@ -313,5 +318,6 @@
 
 <script type="module" src="src/main.js"></script>
 <script type="module" src="src/lib/bgaudio.js"></script>
+<script type="module" src="src/lib/reveal.js"></script>
 </body>
 </html>

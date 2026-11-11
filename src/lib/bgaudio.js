@@ -3,23 +3,13 @@
 //
 // Browsers refuse to start audible audio before the visitor has interacted
 // with the page, so playback is attempted straight away and, when refused,
-// armed to start on the first click, tap or key press instead. The visitor's
-// on/off choice is remembered, the track pauses while the tab is hidden, and
-// a visitor who asked for reduced motion gets silence until they opt in.
+// armed to start on the first click, tap or key press instead. Sound is ON by
+// default on every visit (the owner's choice); the toggle only lasts for the
+// current visit. The track pauses while the tab is hidden.
 
 const SRC = 'public/media/bg-audio.mp3';
 const VOLUME = 0.35;
 const FADE_MS = 1400;
-const KEY = 'bg-audio';
-
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-function saved() {
-  try { return localStorage.getItem(KEY); } catch { return null; }
-}
-function save(v) {
-  try { localStorage.setItem(KEY, v); } catch { /* private mode: not kept */ }
-}
 
 const audio = new Audio(SRC);
 audio.loop = true;
@@ -27,7 +17,7 @@ audio.preload = 'auto';
 audio.volume = 0;
 
 // wanted = the visitor's intent; the element may still be waiting on a gesture
-let wanted = saved() ? saved() === 'on' : !reduced;
+let wanted = true;
 let fadeId = 0;
 
 const btn = document.createElement('button');
@@ -85,7 +75,6 @@ function stop() {
 btn.addEventListener('click', (e) => {
   e.stopPropagation();
   wanted = !wanted;
-  save(wanted ? 'on' : 'off');
   if (wanted) start(); else stop();
   paint();
 });

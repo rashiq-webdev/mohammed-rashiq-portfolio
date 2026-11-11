@@ -44,7 +44,7 @@ export async function initFinale() {
   let frame2Ready = false;
   if (frame2 && frame2Img) {
     const candidates = [
-      'public/images/mohammed-rashiq-professional.png',
+      'public/images/mohammed-rashiq-walk.webp',
     ];
     (function tryNext(i) {
       if (i >= candidates.length) return;

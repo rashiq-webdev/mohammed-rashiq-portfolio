@@ -492,6 +492,53 @@ html.is-booting .hdr { opacity: 0; }
    it runs straight through the button's label */
 .boot.is-gate .boot__bar { display: none; }
 
+.sound-prompt {
+  width: min(430px, calc(100vw - 40px));
+  padding: clamp(26px, 5vw, 42px);
+  border: 1px solid rgba(237, 237, 237, .22);
+  background: rgba(9, 8, 8, .94);
+  text-align: center;
+}
+.sound-prompt[hidden] { display: none; }
+.sound-prompt__eyebrow {
+  display: block;
+  color: var(--ink-hot);
+  font-size: 9px;
+  letter-spacing: .3em;
+}
+.sound-prompt h1 {
+  margin: 18px 0 10px;
+  color: var(--paper);
+  font: 400 clamp(23px, 4vw, 34px)/1.1 var(--disp);
+}
+.sound-prompt__copy {
+  margin: 0;
+  color: var(--dim);
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.sound-prompt__actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 26px;
+}
+.sound-prompt__actions button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(237, 237, 237, .3);
+  background: transparent;
+  color: var(--paper);
+  font: 600 10px/1 var(--ui);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.sound-prompt__yes { background: var(--ink-hot) !important; border-color: var(--ink-hot) !important; }
+.sound-prompt__actions button:hover { border-color: var(--ink-hot); }
+.sound-prompt__actions button:disabled { opacity: .55; cursor: wait; }
+.sound-prompt__actions button:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
+
 .fallback {
   position: absolute; inset: 0;
   display: grid; place-content: center; text-align: center; gap: 12px;

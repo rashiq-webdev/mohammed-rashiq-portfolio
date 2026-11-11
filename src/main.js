@@ -16,7 +16,7 @@ import { initUniverse } from './scene2/boot2.js';
 import { initChrono } from './scene3/boot3.js';
 import { initGallery } from './scene4/boot4.js';
 import { initFinale } from './scene6/boot6.js';
-import { startSound } from './lib/bgaudio.js';
+import { setSoundEnabled } from './lib/bgaudio.js';
 
 // a cinematic page manages its own positions; the browser restoring an old
 // scroll offset mid-boot yanks the visitor (and any scripted anchor) around
@@ -29,6 +29,10 @@ const root = document.documentElement;
 const boot = document.getElementById('boot');
 const bootFill = document.getElementById('bootFill');
 const bootEnter = document.getElementById('bootEnter');
+const soundPrompt = document.getElementById('soundPrompt');
+const soundPromptCopy = soundPrompt.querySelector('.sound-prompt__copy');
+const soundYes = document.getElementById('soundYes');
+const soundNo = document.getElementById('soundNo');
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -98,10 +102,8 @@ async function main() {
   const held = performance.now() - startedAt;
   if (held < MIN_BLACK) await wait(MIN_BLACK - held);
 
-  const playing = await app.clips.hero.play();
-
-  // the later scenes build while the hero plays, so scrolling into them is
-  // instant; each one runs only while it is actually on screen
+  // Start building later scenes behind the sound choice so scrolling into
+  // them is instant; each one runs only while it is actually on screen.
   initUniverse().then((u) => { app.universe = u; })
     .catch((e) => console.warn('[gireesh] universe unavailable:', e.message));
   initChrono().then((c) => { app.chrono = c; })
@@ -111,12 +113,55 @@ async function main() {
   initFinale().then((f) => { app.finale = f; })
     .catch((e) => console.warn('[gireesh] finale unavailable:', e.message));
 
-  // Attempt the music, but do not let autoplay policy hold the visual opening
-  // on black. The background-audio module resumes on the visitor's first
-  // interaction if the browser rejects playback here.
-  void startSound();
+  // Wait until the page assets are ready, then let the visitor choose sound.
+  // Calling play() directly from that button click satisfies browser autoplay
+  // rules without holding the loading bar over the page.
+  const playing = await chooseSound();
   if (!playing) return awaitGesture();
   begin();
+}
+
+function chooseSound() {
+  boot.classList.add('is-gate');
+  soundPrompt.hidden = false;
+
+  return new Promise((resolve) => {
+    let busy = false;
+    const choose = async (enabled) => {
+      if (busy) return;
+      busy = true;
+      soundYes.disabled = true;
+      soundNo.disabled = true;
+
+      // Start audio synchronously within the trusted button click. If sound is
+      // declined, remember that choice for this visit and keep the hero muted.
+      const audio = setSoundEnabled(enabled);
+      app.clips.hero.el.currentTime = 0;
+      const video = app.clips.hero.play();
+      const [soundStarted, videoStarted] = await Promise.all([audio, video]);
+
+      if (enabled && !soundStarted) {
+        soundPromptCopy.textContent = 'Sound could not start. Try again or continue silently.';
+        soundYes.disabled = false;
+        soundNo.disabled = false;
+        busy = false;
+        return;
+      }
+      if (!videoStarted) {
+        soundPromptCopy.textContent = 'The opening could not start. Please try again.';
+        soundYes.disabled = false;
+        soundNo.disabled = false;
+        busy = false;
+        return;
+      }
+
+      soundPrompt.hidden = true;
+      resolve(true);
+    };
+
+    soundYes.addEventListener('click', () => choose(true));
+    soundNo.addEventListener('click', () => choose(false));
+  });
 }
 
 function begin() {
@@ -157,12 +202,12 @@ function begin() {
   requestAnimationFrame(frame);
 }
 
-/** Autoplay was refused — offer a single deliberate entry point. */
+/** Rare fallback if muted video playback is also blocked by the browser. */
 function awaitGesture() {
   boot.classList.add('is-gate');      // loading is over: the bar gives way to the button
   bootEnter.hidden = false;
   bootEnter.addEventListener('click', async () => {
-    await Promise.all([startSound(), app.clips.hero.play()]);
+    await app.clips.hero.play();
     begin();
   }, { once: true });
 }

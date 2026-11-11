@@ -56,7 +56,8 @@ function arm() {
     // Let the button's click handler own its own gesture. Starting on
     // pointerdown here would make the following click look like a second tap
     // and immediately toggle the newly started music back off.
-    if (event.target === btn || btn.contains(event.target)) return;
+    if (event.target === btn || btn.contains(event.target)
+      || event.target.closest?.('.sound-prompt')) return;
     if (wanted) start();
   };
   for (const ev of ['pointerdown', 'keydown', 'touchend']) {
@@ -79,14 +80,15 @@ function start() {
 }
 
 /**
- * Start the music and report whether it is actually sounding.
- *
- * The opening attempts music before it begins. If autoplay is refused, the
- * visual intro continues and the sound control invites a user gesture.
+ * Enable or disable music. Call this directly from the visitor's button click
+ * when enabling, so the browser recognizes the trusted gesture.
  */
-export function startSound() {
-  if (!wanted) return Promise.resolve(true);
-  return start();
+export function setSoundEnabled(enabled) {
+  wanted = Boolean(enabled);
+  paint();
+  if (wanted) return start();
+  stop();
+  return Promise.resolve(false);
 }
 
 function stop() {
@@ -123,7 +125,6 @@ audio.addEventListener('pause', paint);
 
 document.body.appendChild(btn);
 paint();
-// The opening (main.js) starts the track through startSound(). Arming here as
-// well means that if the opening never runs (no WebGL, script error), the
-// first click or key press still brings the music in.
+// Keep a gesture fallback for browsers that reject autoplay before the
+// opening choice is shown or if the opening sequence cannot run.
 arm();

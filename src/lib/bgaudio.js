@@ -52,7 +52,13 @@ function fadeTo(target, then) {
 }
 
 function arm() {
-  const go = () => { if (wanted) start(); };
+  const go = (event) => {
+    // Let the button's click handler own its own gesture. Starting on
+    // pointerdown here would make the following click look like a second tap
+    // and immediately toggle the newly started music back off.
+    if (event.target === btn || btn.contains(event.target)) return;
+    if (wanted) start();
+  };
   for (const ev of ['pointerdown', 'keydown', 'touchend']) {
     window.addEventListener(ev, go, { once: true, passive: true });
   }

@@ -55,3 +55,78 @@
 @media (prefers-reduced-motion: reduce) {
   .bgaudio.is-on .bgaudio__bars i { animation: none; transform: scaleY(.7); }
 }
+
+/* --------------------------------------------------------------------------
+   First-visit guided tour (src/lib/autotour.js): the pill that says the page
+   is scrolling itself, with the way out.
+   -------------------------------------------------------------------------- */
+.autotour {
+  position: fixed;
+  z-index: 95;
+  left: 50%;
+  bottom: clamp(18px, 4vh, 34px);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 6px 0 16px;
+  min-height: 40px;
+  border: 1px solid rgba(237, 237, 237, .28);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .7);
+  color: var(--paper, #ededed);
+  font: 500 10px/1 var(--ui, system-ui, sans-serif);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translate(-50%, 12px);
+  transition: opacity .45s ease, transform .45s ease;
+}
+.autotour.is-on { opacity: 1; transform: translate(-50%, 0); }
+.autotour__txt::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 9px;
+  border-radius: 50%;
+  background: var(--ink-hot, #ff2a2b);
+  animation: autotour-dot 1.2s ease-in-out infinite;
+}
+.autotour__skip {
+  min-height: 28px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink-hot, #ff2a2b);
+  color: #fff;
+  font: inherit;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.autotour__skip:focus-visible { outline: 2px solid var(--paper, #ededed); outline-offset: 3px; }
+@keyframes autotour-dot { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+
+/* --------------------------------------------------------------------------
+   Phones. The labelled pill is a third of the screen wide down here and sat
+   on top of whatever each scene puts in its bottom-left corner. It becomes a
+   round icon button (the label stays for screen readers via aria-label) and
+   rides a little higher, clear of the closing bar's stacked links.
+   -------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .bgaudio {
+    left: 12px;
+    bottom: 96px;
+    width: 40px;
+    height: 40px;
+    min-height: 0;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+  }
+  .bgaudio__txt { display: none; }
+  .autotour { bottom: 16px; }
+}

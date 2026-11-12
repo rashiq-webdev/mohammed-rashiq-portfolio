@@ -17,6 +17,7 @@ import { initChrono } from './scene3/boot3.js';
 import { initGallery } from './scene4/boot4.js';
 import { initFinale } from './scene6/boot6.js';
 import { setSoundEnabled } from './lib/bgaudio.js';
+import { scheduleTour } from './lib/autotour.js';
 
 // a cinematic page manages its own positions; the browser restoring an old
 // scroll offset mid-boot yanks the visitor (and any scripted anchor) around
@@ -24,6 +25,7 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 const MEDIA = 'public/media/';
 const MIN_BLACK = 620;          // the darkness must be felt, even on a fast line
+const HERO_HOLD_MS = 6000;     // settled hero on screen before the first-visit tour scrolls
 
 const root = document.documentElement;
 const boot = document.getElementById('boot');
@@ -202,6 +204,18 @@ function begin() {
     return;
   }
   requestAnimationFrame(frame);
+
+  // First visit only: once the opening has settled, scroll the page through
+  // every scene for them. Any input from the visitor hands it straight back.
+  // The hero is the point of the page, so it is held well past the moment it
+  // settles: the full build-up plays, then he walks a few more seconds in the
+  // finished composition before the page starts to move.
+  const elapsed = (performance.now() - app.t0) / 1000;
+  scheduleTour((T.settled - elapsed) * 1000 + HERO_HOLD_MS, {
+    // the tour ends back on the hero, in quiet; the corner button turns the
+    // music on again
+    onComplete: () => setSoundEnabled(false),
+  });
 }
 
 /** Rare fallback if muted video playback is also blocked by the browser. */

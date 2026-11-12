@@ -234,3 +234,57 @@
   .universe__stack li, .universe__stack li::after { transition-duration: 0.01ms; transition-delay: 0s; }
   .universe__stack span { animation: none; }
 }
+
+/* phone legibility: the group headings were 8.5px */
+@media (max-width: 760px) {
+  .universe__stack b { font-size: 10px; }
+  .universe__stack span { font-size: 12.5px; }
+  .universe__over, .universe__sub { font-size: 9.5px; }
+}
+
+/* --------------------------------------------------------------------------
+   Phone layout: a column, not layers. With the stack and the figure both
+   absolutely placed, the stack ran down over his head on shorter phones
+   (360x640: 105px of overlap). Here the title, the stack and the figure
+   simply follow one another, and the figure takes whatever height is left.
+   -------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .universe {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: clamp(22px, 5svh, 56px);
+  }
+  .universe .universe__title {
+    position: static;
+    flex: none;
+    transform: translateY(14px);
+  }
+  .universe.is-on .universe__title { transform: none; }
+  .universe .universe__stack {
+    position: static;
+    flex: none;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 16px 0 0;
+    padding: 0 16px;
+  }
+  .universe .universe__portrait {
+    position: static;
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    margin-top: 10px;
+    object-fit: contain;
+    object-position: center bottom;
+    transform: scale(1.025);
+    transform-origin: 50% 100%;
+  }
+  .universe.is-on .universe__portrait { transform: none; }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  .universe .universe__portrait,
+  .universe.is-on .universe__title { transform: none; }
+}

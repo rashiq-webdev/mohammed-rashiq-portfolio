@@ -117,15 +117,19 @@
    rides a little higher, clear of the closing bar's stacked links.
    -------------------------------------------------------------------------- */
 @media (max-width: 760px) {
+  /* a tab on the screen's left edge rather than a floating circle: as a
+     circle 12px in, it covered the first letters of the Profile text */
   .bgaudio {
-    left: 12px;
+    left: 0;
     bottom: 96px;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 44px;
     min-height: 0;
-    padding: 0;
+    padding: 0 4px 0 0;
     gap: 0;
     justify-content: center;
+    border-left: 0;
+    border-radius: 0 999px 999px 0;
   }
   .bgaudio__txt { display: none; }
   .autotour { bottom: 16px; }

@@ -347,7 +347,7 @@ function degrade(reason) {
   for (const [, name] of CUES) root.classList.add(`is-${name}`);
   document.querySelector('.stage-wrap').insertAdjacentHTML('afterbegin',
     '<div class="fallback"><p>MOHAMMED RASHIQ</p>'
-    + '<small>Welcome to my world</small></div>');
+    + '<small>Building Web &amp; Mobile Products</small></div>');
 }
 
 function renderStill() {

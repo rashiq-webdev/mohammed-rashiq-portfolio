@@ -127,7 +127,20 @@ export class Chrono {
     // During the intro the sequence owns the hand; afterwards the pointer does.
     // Blending on `handAuthority` means control is handed over rather than
     // switched, so the hand never jumps at the moment the scene goes live.
-    const wanted = lerp(this.targetU, s.introU, s.handAuthority);
+    // On a phone, scroll owns the year from the very first frame (boot3.js):
+    // the intro's sweep to 2026 would otherwise flash the last card and then
+    // run back through the years before the visitor's position took over.
+    // The hand also starts ON the scrolled year rather than springing to it
+    // from 2026, which would pass through every card on the way.
+    if (L.portrait && !this._portraitSet) {
+      this._portraitSet = true;
+      this.u = this.targetU;
+    } else if (!L.portrait) {
+      this._portraitSet = false;
+    }
+    const wanted = L.portrait
+      ? this.targetU
+      : lerp(this.targetU, s.introU, s.handAuthority);
     // clamped as well as damped: u indexes the years, and a stalled tab can
     // hand the loop a wild dt, which would otherwise let the spring overshoot
     // out of range and swing the hand somewhere meaningless

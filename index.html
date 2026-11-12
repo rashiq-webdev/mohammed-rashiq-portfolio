@@ -97,15 +97,6 @@
   <!-- ------------------------------------------------------------------ -->
   <div class="boot" id="boot">
     <div class="boot__bar"><i id="bootFill"></i></div>
-    <section class="sound-prompt" id="soundPrompt" aria-labelledby="soundPromptTitle" hidden>
-      <span class="sound-prompt__eyebrow">A CINEMATIC EXPERIENCE</span>
-      <h1 id="soundPromptTitle">For the best experience</h1>
-      <p class="sound-prompt__copy">Would you like sound on?</p>
-      <div class="sound-prompt__actions">
-        <button class="sound-prompt__yes" id="soundYes" type="button">Yes, turn sound on</button>
-        <button class="sound-prompt__no" id="soundNo" type="button">Continue without sound</button>
-      </div>
-    </section>
     <button class="boot__enter" id="bootEnter" hidden>
       <span>Enter</span>
     </button>
@@ -324,6 +315,23 @@
   </div>
   </div>
 </footer>
+
+<!-- The sound choice belongs to the whole page, not to the hero: it is a
+     fixed layer above every scene, and the page does not scroll until it is
+     answered. Hidden until main.js shows it, so a script failure can never
+     leave a visitor stuck behind it. -->
+<div class="sound-gate" id="soundGate" role="dialog" aria-modal="true"
+     aria-labelledby="soundPromptTitle" hidden>
+  <section class="sound-prompt" id="soundPrompt">
+    <span class="sound-prompt__eyebrow">A CINEMATIC EXPERIENCE</span>
+    <h2 id="soundPromptTitle">For the best experience</h2>
+    <p class="sound-prompt__copy">Would you like sound on?</p>
+    <div class="sound-prompt__actions">
+      <button class="sound-prompt__yes" id="soundYes" type="button">Yes, turn sound on</button>
+      <button class="sound-prompt__no" id="soundNo" type="button">Continue without sound</button>
+    </div>
+  </section>
+</div>
 
 <script type="module" src="src/main.js"></script>
 <script type="module" src="src/lib/bgaudio.js"></script>

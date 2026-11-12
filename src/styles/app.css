@@ -492,6 +492,28 @@ html.is-booting .hdr { opacity: 0; }
    it runs straight through the button's label */
 .boot.is-gate .boot__bar { display: none; }
 
+/* The sound choice: a fixed layer over the WHOLE page. It used to live inside
+   the hero's boot screen, where the scrolling content layer (.flow) sat on top
+   of it and swallowed every click, and where scrolling simply left it behind. */
+.sound-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #000;
+  transition: opacity .45s ease-out, visibility .45s;
+}
+.sound-gate[hidden] { display: none; }
+.sound-gate.is-leaving { opacity: 0; visibility: hidden; pointer-events: none; }
+/* nothing scrolls, and the corner sound button waits, until it is answered */
+html.is-sound-gate, html.is-sound-gate body { overflow: hidden; }
+html.is-sound-gate .bgaudio { display: none; }
+/* while the opening is still loading, the content layer must not sit over
+   the boot screen's Enter button either */
+html.is-booting .flow { pointer-events: none; }
+
 .sound-prompt {
   width: min(430px, calc(100vw - 40px));
   padding: clamp(26px, 5vw, 42px);
@@ -499,14 +521,13 @@ html.is-booting .hdr { opacity: 0; }
   background: rgba(9, 8, 8, .94);
   text-align: center;
 }
-.sound-prompt[hidden] { display: none; }
 .sound-prompt__eyebrow {
   display: block;
   color: var(--ink-hot);
   font-size: 9px;
   letter-spacing: .3em;
 }
-.sound-prompt h1 {
+.sound-prompt h2 {
   margin: 18px 0 10px;
   color: var(--paper);
   font: 400 clamp(23px, 4vw, 34px)/1.1 var(--disp);

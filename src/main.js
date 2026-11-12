@@ -29,8 +29,7 @@ const root = document.documentElement;
 const boot = document.getElementById('boot');
 const bootFill = document.getElementById('bootFill');
 const bootEnter = document.getElementById('bootEnter');
-const soundPrompt = document.getElementById('soundPrompt');
-const soundPromptCopy = soundPrompt.querySelector('.sound-prompt__copy');
+const soundGate = document.getElementById('soundGate');
 const soundYes = document.getElementById('soundYes');
 const soundNo = document.getElementById('soundNo');
 
@@ -113,52 +112,59 @@ async function main() {
   initFinale().then((f) => { app.finale = f; })
     .catch((e) => console.warn('[gireesh] finale unavailable:', e.message));
 
-  // Wait until the page assets are ready, then let the visitor choose sound.
-  // Calling play() directly from that button click satisfies browser autoplay
-  // rules without holding the loading bar over the page.
-  const playing = await chooseSound();
-  if (!playing) return awaitGesture();
+  // The sound choice was offered the moment the page opened (see soundChoice
+  // below), so it is usually answered before the assets finish. The opening
+  // starts only once it is: sound first, then the sequence.
+  await soundChoice;
+  if (!(await startHero())) return awaitGesture();
   begin();
 }
 
-function chooseSound() {
-  boot.classList.add('is-gate');
-  soundPrompt.hidden = false;
+/**
+ * Start the hero clip from its first frame. A play() issued while the element
+ * is still settling (a seek in flight, a layout change) can be rejected once
+ * and succeed a moment later, so it is retried before falling back to Enter.
+ */
+async function startHero() {
+  const clip = app.clips.hero;
+  if (clip.el.currentTime > 0.05) clip.el.currentTime = 0;
+  if (await clip.play()) return true;
+  await wait(300);
+  return clip.play();
+}
 
+/**
+ * The page-wide sound choice.
+ *
+ * Shown at once, above every scene, with scrolling locked until it is
+ * answered. The answer is applied inside the click itself, because that click
+ * is the gesture browsers require before they will play audio. Audio is best
+ * effort: whatever happens to it, the choice always closes.
+ */
+function offerSoundChoice() {
   return new Promise((resolve) => {
-    let busy = false;
-    const choose = async (enabled) => {
-      if (busy) return;
-      busy = true;
-      soundYes.disabled = true;
-      soundNo.disabled = true;
-
-      // Start audio synchronously within the trusted button click. If sound is
-      // declined, remember that choice for this visit and keep the hero muted.
-      // Audio is best effort: a browser or network audio failure must never
-      // leave the visitor trapped on the choice screen. The visible hero is
-      // gated only on its own video being able to play.
+    let answered = false;
+    const choose = (enabled) => {
+      if (answered) return;
+      answered = true;
       setSoundEnabled(enabled);
-      app.clips.hero.el.currentTime = 0;
-      const video = app.clips.hero.play();
-      try {
-        await video;
-      } catch {
-        soundPromptCopy.textContent = 'The opening could not start. Please try again.';
-        soundYes.disabled = false;
-        soundNo.disabled = false;
-        busy = false;
-        return;
-      }
-
-      soundPrompt.hidden = true;
-      resolve(true);
+      // the same gesture also clears any autoplay hold on the hero clip
+      app.clips.hero?.el.play().catch(() => {});
+      root.classList.remove('is-sound-gate');
+      soundGate.classList.add('is-leaving');
+      setTimeout(() => { soundGate.hidden = true; }, 500);
+      resolve(enabled);
     };
-
     soundYes.addEventListener('click', () => choose(true));
     soundNo.addEventListener('click', () => choose(false));
+
+    window.scrollTo(0, 0);
+    root.classList.add('is-sound-gate');
+    soundGate.hidden = false;
+    soundYes.focus({ preventScroll: true });
   });
 }
+const soundChoice = offerSoundChoice();
 
 function begin() {
   boot.classList.add('is-done');

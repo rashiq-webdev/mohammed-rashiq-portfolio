@@ -232,12 +232,20 @@
   background: linear-gradient(160deg, rgba(48, 26, 18, .95), rgba(18, 10, 8, .97));
 }
 
+/* The photo's own window. Some years are zoomed in on the face (--face-zoom
+   below); without a clipping box that zoom grows the picture over the card's
+   year and caption instead of cropping it. */
+.yr__photo {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+}
 .yr__img {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 100%;
   object-fit: cover;
-  border-radius: 6px;
   /* the far years read as older: cooler, flatter, further back in memory */
   filter:
     saturate(calc(.55 + .55 * var(--near, 0)))
@@ -249,7 +257,9 @@
 }
 .yr[data-year="2021"] .yr__img { --face-zoom: 1.32; --face-focus: 35%; object-position: 50% 35%; }
 .yr[data-year="2024"] .yr__img { --face-zoom: 1.55; --face-focus: 12%; object-position: 50% 8%; }
-.yr[data-year="2025"] .yr__img { --face-zoom: 2.15; --face-focus: 28%; object-position: 50% 28%; }
+/* 2025 is a full-length shot with the face a fifth of the way down: crop from
+   the top of the photo and zoom on the face, so head and shoulders fill the window */
+.yr[data-year="2025"] .yr__img { --face-zoom: 1.7; --face-focus: 34%; object-position: 50% 0%; }
 
 .yr__body {
   display: block;
@@ -338,9 +348,44 @@
 .chrono.is-portrait .chrono__hint { top: auto; bottom: clamp(18px, 4vh, 44px); }
 
 @media (max-width: 760px) {
-  .chrono { height: 200svh; }
   .chrono__rail { display: none; }
-  .chrono__note--bl { display: none; }
+  .chrono__note { display: none; }
+}
+
+/* Phone composition. The scene is taller here because its scroll travel is
+   what turns the years (boot3.js): six cards need room to each hold the
+   stage for a moment. */
+.chrono.is-portrait { height: 380svh; }
+
+/* the title sits on one line pair at the top right, clear of the clock hand
+   that sweeps across the top left */
+.chrono.is-portrait .chrono__title {
+  left: auto;
+  right: 16px;
+  top: clamp(112px, 16.5svh, 150px);
+  display: block;
+  width: 11.5em;
+  text-align: right;
+  font-size: 12.5px;
+  line-height: 1.5;
+  letter-spacing: .26em;
+}
+.chrono.is-portrait .chrono__title span { display: inline; }
+.chrono.is-portrait .chrono__title span + span::before { content: ' '; }
+
+/* the card is the content on a phone, so its copy is set to be read */
+.chrono.is-portrait .yr__frame { padding: 8px; border-radius: 12px; }
+.chrono.is-portrait .yr__body { padding: 12px 6px 6px; }
+.chrono.is-portrait .yr__year { font-size: 24px; font-weight: 400; }
+.chrono.is-portrait .yr__key { font-size: 10.5px; margin-top: .6em; }
+.chrono.is-portrait .yr__lines { gap: .3em; margin-top: .7em; }
+.chrono.is-portrait .yr__lines i { font-size: 10px; letter-spacing: .14em; color: #c9bab0; }
+.chrono.is-portrait .yr__go { display: none; }
+
+.chrono.is-portrait .chrono__hint {
+  right: 16px;
+  font-size: 9px;
+  line-height: 1.9;
 }
 
 @media (prefers-reduced-motion: reduce) {

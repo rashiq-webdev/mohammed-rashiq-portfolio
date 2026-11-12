@@ -205,3 +205,8 @@
   .g-card__in { animation: none; }
   .g-label { transition-duration: 0.01ms; transition-delay: 0s; }
 }
+
+/* On a phone the two bottom corner labels land on the cards at the figure's
+   feet; the scene reads better without them. */
+.gallery.is-portrait .g-label--real,
+.gallery.is-portrait .g-label--tomorrow { display: none; }

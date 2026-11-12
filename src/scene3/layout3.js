@@ -18,7 +18,7 @@ export const YEARS = [
   {
     year: 2022,
     key: 'Exploration',
-    lines: ['Learned design', 'Found direction'],
+    lines: ['Learned to code', 'Found direction'],
   },
   {
     year: 2023,
@@ -38,7 +38,7 @@ export const YEARS = [
   {
     year: 2026,
     key: 'Next chapter',
-    lines: ['Bigger goals', 'More impact', 'Still designing'],
+    lines: ['Bigger goals', 'More impact', 'Still building'],
   },
 ];
 
@@ -120,9 +120,10 @@ export function fitScene(w, h) {
     const top = h * 0.255;
     const step = h * 0.088;
     nodes = REF.nodes.map((_, i) => [railX + i * w * 0.006, top + i * step]);
-    const cw = Math.min(w * 0.62, 330);
+    // the card takes everything right of the year rail, with a margin
+    const cw = Math.min(w * 0.66, 340);
     cards = REF.nodes.map((_, i) => ({
-      x: w * 0.60, y: h * 0.50, w: cw, i,
+      x: w - 14 - cw * 0.5, y: h * 0.47, w: cw, i,
     }));
     pivot = [w * 0.52, h * 0.075];
     floor = [w * 0.5, h * 0.965];

@@ -52,8 +52,9 @@ export async function initChrono() {
     el.setAttribute('aria-label', `${y.year} — ${y.key}`);
     el.innerHTML =
       `<span class="yr__frame">`
+      + `<span class="yr__photo">`
       + `<img class="yr__img" src="public/years/${y.year}.jpg" alt="" `
-      + `loading="lazy" decoding="async">`
+      + `loading="lazy" decoding="async"></span>`
       + `<span class="yr__body">`
       + `<span class="yr__year">${y.year}</span>`
       + `<span class="yr__key">${y.key}</span>`
@@ -82,7 +83,8 @@ export async function initChrono() {
     return el;
   });
 
-  const state = { started: 0, running: false, visible: false, raf: 0, last: 0 };
+  const state = { started: 0, running: false, visible: false, raf: 0, last: 0, portrait: false };
+  const hint = section.querySelector('.chrono__hint');
 
   // ---- placement ---------------------------------------------------------
   function place() {
@@ -111,10 +113,40 @@ export async function initChrono() {
       const n = L.nodes[i];
       labels[i].style.left = `${n[0]}px`;
       labels[i].style.top = `${n[1]}px`;
-      labels[i].style.fontSize = `${Math.max(19, c.w * 0.30)}px`;
+      // In portrait the card is two thirds of the screen wide, so sizing the
+      // numeral from it made 70px figures that ran off the left edge. On a
+      // phone the rail is sized from the screen height it has to fit in.
+      labels[i].style.fontSize = portrait
+        ? `${Math.round(Math.min(34, Math.max(22, L.h * 0.038)))}px`
+        : `${Math.max(19, c.w * 0.30)}px`;
     }
     section.classList.toggle('is-portrait', portrait);
+    if (hint) {
+      hint.innerHTML = portrait
+        ? 'Scroll<br>or tap a year<i></i>'
+        : 'Move<br>to travel<br>through time<i></i>';
+    }
+    state.portrait = portrait;
+    if (portrait) scrollToYear();
   }
+
+  // ---- scroll -> time (phones) -------------------------------------------
+  // A phone has no hovering pointer, so nothing ever moved the hand off 2026
+  // and five of the six cards were never seen. In portrait the section's own
+  // scroll travel drives the year instead: 2021 as the scene arrives, 2026 as
+  // it leaves. Tapping a year still jumps straight to it, until the next
+  // scroll takes over again.
+  function scrollToYear() {
+    const travel = section.offsetHeight - window.innerHeight;
+    if (travel <= 0) return;
+    const p = (window.scrollY - (section.getBoundingClientRect().top + window.scrollY))
+      / travel;
+    const u = Math.max(0, Math.min(1, (p - 0.06) / 0.86)) * (YEARS.length - 1);
+    setTarget(u);
+  }
+  window.addEventListener('scroll', () => {
+    if (state.portrait && state.visible) scrollToYear();
+  }, { passive: true });
   place();
 
   let resizeId;

@@ -246,3 +246,7 @@
 @media (prefers-reduced-motion: reduce) {
   .f-cap, .fin__bar, .fin__wordmark { transition-duration: 0.01ms; transition-delay: 0s; }
 }
+
+/* Phone: larger tap targets and readable type in the closing bar. */
+.fin.is-portrait .fin__bar { font-size: 10px; gap: 12px; }
+.fin.is-portrait .fin__bar a { padding: 6px 10px; }

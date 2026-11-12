@@ -17,7 +17,7 @@ import { initChrono } from './scene3/boot3.js';
 import { initGallery } from './scene4/boot4.js';
 import { initFinale } from './scene6/boot6.js';
 import { setSoundEnabled } from './lib/bgaudio.js';
-import { scheduleTour } from './lib/autotour.js';
+import { scheduleTour, tourPending } from './lib/autotour.js';
 
 // a cinematic page manages its own positions; the browser restoring an old
 // scroll offset mid-boot yanks the visitor (and any scripted anchor) around
@@ -25,7 +25,8 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 const MEDIA = 'public/media/';
 const MIN_BLACK = 620;          // the darkness must be felt, even on a fast line
-const HERO_HOLD_MS = 6000;     // settled hero on screen before the first-visit tour scrolls
+const HERO_HOLD_MS = 6000;     // settled hero on screen before the tour scrolls
+const TOUR_NOTE_MS = 4000;     // how long the "sit back and relax" screen stays
 
 const root = document.documentElement;
 const boot = document.getElementById('boot');
@@ -146,16 +147,36 @@ async function startHero() {
 function offerSoundChoice() {
   return new Promise((resolve) => {
     let answered = false;
+    const close = (enabled) => {
+      root.classList.remove('is-sound-gate');
+      soundGate.classList.add('is-leaving');
+      setTimeout(() => { soundGate.hidden = true; }, 500);
+      resolve(enabled);
+    };
     const choose = (enabled) => {
       if (answered) return;
       answered = true;
       setSoundEnabled(enabled);
       // the same gesture also clears any autoplay hold on the hero clip
       app.clips.hero?.el.play().catch(() => {});
-      root.classList.remove('is-sound-gate');
-      soundGate.classList.add('is-leaving');
-      setTimeout(() => { soundGate.hidden = true; }, 500);
-      resolve(enabled);
+
+      // Entering with sound on means the page will tour itself after the
+      // opening, on every load. That is said on its own screen, AFTER the
+      // sound choice and never beside it, for a few seconds (or until
+      // "Start now"), with the music already in. Entering without sound is a
+      // quiet visit: no tour, no second screen.
+      const tourPrompt = document.getElementById('tourPrompt');
+      app.tour = enabled && Boolean(tourPrompt) && tourPending();
+      if (!app.tour) return close(enabled);
+      document.getElementById('soundPrompt').hidden = true;
+      tourPrompt.style.setProperty('--stay', `${TOUR_NOTE_MS}ms`);
+      tourPrompt.hidden = false;
+      let gone = false;
+      const go = () => { if (!gone) { gone = true; close(enabled); } };
+      const start = document.getElementById('tourStart');
+      start.addEventListener('click', go, { once: true });
+      start.focus({ preventScroll: true });
+      setTimeout(go, TOUR_NOTE_MS);
     };
     soundYes.addEventListener('click', () => choose(true));
     soundNo.addEventListener('click', () => choose(false));
@@ -205,11 +226,12 @@ function begin() {
   }
   requestAnimationFrame(frame);
 
-  // First visit only: once the opening has settled, scroll the page through
-  // every scene for them. Any input from the visitor hands it straight back.
+  // Entered with sound on: once the opening has settled, scroll the page
+  // through every scene for them. Any input hands it straight back.
   // The hero is the point of the page, so it is held well past the moment it
   // settles: the full build-up plays, then he walks a few more seconds in the
   // finished composition before the page starts to move.
+  if (!app.tour) return;
   const elapsed = (performance.now() - app.t0) / 1000;
   scheduleTour((T.settled - elapsed) * 1000 + HERO_HOLD_MS, {
     // the tour ends back on the hero, in quiet; the corner button turns the

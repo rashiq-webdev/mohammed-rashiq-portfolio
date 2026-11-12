@@ -331,6 +331,18 @@
       <button class="sound-prompt__no" id="soundNo" type="button">Continue without sound</button>
     </div>
   </section>
+  <!-- step two, when entering with sound: shown AFTER the sound choice, never
+       beside it. Says the page is about to tour itself, then gets out of the way. -->
+  <section class="sound-prompt sound-prompt--tour" id="tourPrompt" aria-live="polite" hidden>
+    <span class="sound-prompt__eyebrow">GUIDED TOUR</span>
+    <h2>Sit back and relax</h2>
+    <p class="sound-prompt__copy">A short tour of this page is about to play</p>
+    <p class="sound-prompt__fine">Scroll or tap any time to take over.</p>
+    <span class="sound-prompt__bar" aria-hidden="true"><i></i></span>
+    <div class="sound-prompt__actions">
+      <button class="sound-prompt__no" id="tourStart" type="button">Start now</button>
+    </div>
+  </section>
 </div>
 
 <script type="module" src="src/main.js"></script>

@@ -539,6 +539,37 @@ html.is-booting .flow { pointer-events: none; }
   letter-spacing: .12em;
   text-transform: uppercase;
 }
+.sound-prompt[hidden] { display: none; }
+/* step two of the gate: arrives as the sound question leaves */
+.sound-prompt--tour { animation: promptIn .5s var(--ease-out) both; }
+@keyframes promptIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.sound-prompt__fine {
+  margin: 12px 0 0;
+  color: rgba(237, 237, 237, .6);
+  font-size: 12px;
+  letter-spacing: .04em;
+}
+/* how long the message stays, drawn as a line filling up (--stay from main.js) */
+.sound-prompt__bar {
+  display: block;
+  height: 1px;
+  margin-top: 22px;
+  background: rgba(237, 237, 237, .16);
+  overflow: hidden;
+}
+.sound-prompt__bar i {
+  display: block;
+  height: 100%;
+  background: var(--ink-hot);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  animation: promptBar var(--stay, 4s) linear forwards;
+}
+@keyframes promptBar { to { transform: scaleX(1); } }
+.sound-prompt--tour .sound-prompt__actions { margin-top: 18px; }
 .sound-prompt__actions {
   display: grid;
   gap: 10px;
